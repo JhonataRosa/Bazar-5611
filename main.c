@@ -5,8 +5,14 @@
 #include <time.h>
 
 
-#define CLIENTES 15
+#define CLIENTES 10
 #define VOLUNTARIOS 10
+
+int contCliente;
+int contVolun;
+int contador;
+
+
 
 //CRIA ROUPA
 typedef struct {
@@ -24,6 +30,7 @@ Roupa *roupasR [20];
 
 pthread_mutex_t mutexDisponiveis;
 pthread_mutex_t mutexReparos;
+
 
 
 //REALOCA A LISTA DE ROUPAS A VENDA APÓS ALGUMA VENDA
@@ -46,7 +53,8 @@ void realocaRoupasR() {
 void criaRoupasD() {
   for (int i=0; i < 20; i++) {
   Roupa roupa;
-  roupa.cod = 100+i;
+  roupa.cod = contador;
+  contador++;
   roupa.preco = rand() % 100;
     int sort = rand() % 4;
     switch (sort)
@@ -108,7 +116,8 @@ int sort2 = rand() % 4;
 void criaRoupasR() {
   for (int i=0; i < 10; i++) {
   Roupa roupa;
-  roupa.cod = 300+i;
+  roupa.cod = contador;
+  contador++;
   roupa.preco = rand() % 100;
     int sort = rand() % 4;
     switch (sort)
@@ -166,19 +175,20 @@ int sort2 = rand() % 4;
   }
 }
 
-//CLIENTE COMPRA ROUPA DA LISTA DE VENDAS
-void *clienteCompra (void *arg) {
+/////////////////CLIENTESSSSSS
+
+void clienteCompra () {
+   printf("Cliente %d está comprando a roupa %d\n", contCliente, roupasD[0]->cod);
    roupasD[0] = NULL;
    realocaRoupasD();
-   pthread_exit(NULL);
 }
 
-void *clienteDoa (void *arg) {
+void clienteDoa () {
    for (int i = 0; i < 20; i++) {
    if (roupasR[i] == NULL){
   Roupa roupa;
-  //ADICIONAR ALGO PRO CODIGO
-  //roupa.cod = 300+i;
+  roupa.cod = contador;
+  contador++;
   roupa.preco = rand() % 100;
     int sort = rand() % 4;
     switch (sort)
@@ -228,30 +238,43 @@ int sort2 = rand() % 4;
    break;
 }
   *roupasR[i] = roupa;
+  printf("Cliente %d está doando uma roupa com o codigo %d\n", contCliente, contador);
   break;
    }
    }
-   pthread_exit(NULL);
 }
 
-void *voluntarioMove (*arg) {
+void *t_clientes (void *arg) {
+  int sort = rand() %1;
+  if (sort == 0) {
+  clienteCompra();
+  }
+  else {
+  clienteDoa();
+  }
+  pthread_exit(NULL);
+}
+
+void voluntarioMove () {
+  
   for (int i =0; i < sizeof(roupasD);i++) {
     if (roupasD[i] == NULL) {
       int temp = rand() % sizeof(roupasR);
+      printf("Voluntario %d está movendo a roupa %d\n", contVolun, roupasR[temp]->cod);
       roupasD[i] = roupasR[temp];
       roupasR[temp] = NULL;
       realocaRoupasR();
     }
   }
-  pthread_exit(NULL);
 }
 
-void *voluntarioDoa (*arg) {
+void voluntarioDoa () {
   for (int i = 0; i < 50; i++) {
    if (roupasD[i] == NULL){
+  printf("Voluntario %d está doando uma roupa %d\n", contVolun, contador);
   Roupa roupa;
-  //ADICIONAR ALGO PRO CODIGO
-  //roupa.cod = 300+i;
+  roupa.cod = contador;
+  contador++;
   roupa.preco = rand() % 100;
     int sort = rand() % 4;
     switch (sort)
@@ -303,18 +326,53 @@ int sort2 = rand() % 4;
   *roupasD[i] = roupa;
   break;
    }
-   }
-
-   pthread_exit(NULL);
+  }
 }
 
-void *voluntarioRemove (*arg) {
+void voluntarioRemove () {
+  printf("Voluntario %d está removendo a roupa %d\n", contVolun, roupasD[0]->cod);
   roupasD[0] = NULL;
    realocaRoupasD();
-   pthread_exit(NULL);
+}
+
+void *y_voluntarios (void *arg) {
+  int sort = rand() % 2;
+  switch (sort) {
+    case 0:
+    voluntarioDoa();
+    break;
+
+    case 1:
+    voluntarioMove();
+    break;
+
+    case 2:
+    voluntarioRemove();
+    break;
+  }
+  pthread_exit(NULL); 
 }
 
 int main(void) {
   printf("Hello World\n");
+
+  pthread_t t[CLIENTES];
+	pthread_t y[VOLUNTARIOS];
+	pthread_mutex_init(&mutexDisponiveis, NULL);
+	pthread_mutex_init(&mutexReparos, NULL);
+
+  for (int i = 0; i < CLIENTES + VOLUNTARIOS; i++){
+		printf("Thread %d sendo criada\n",i);
+		pthread_create(&t[i], NULL, t_clientes, NULL);
+		pthread_create(&y[i], NULL, y_voluntarios, NULL);
+	}
+
+ printf("Aguardando término das threads\n");
+
+	for (int i = 0; i < CLIENTES + VOLUNTARIOS; i++){
+		pthread_join(t[i],NULL);
+		pthread_join(y[i],NULL); 
+	}
+
   return 0;
 }
