@@ -22,9 +22,13 @@ Roupa *roupasD[50];
 //LISTA DE ROUPAS PARA REPARO
 Roupa *roupasR [20];
 
+pthread_mutex_t mutexDisponiveis;
+pthread_mutex_t mutexReparos;
+
+
 //REALOCA A LISTA DE ROUPAS A VENDA APÓS ALGUMA VENDA
 void realocaRoupasD() {
-     for (int i = 1; i < 50; i++) {
+     for (int i = 1; i < sizeof(roupasD); i++) {
        if (roupasD[i-1] == NULL) {
      roupasD[i-1] = roupasD[i];
        }
@@ -33,7 +37,7 @@ void realocaRoupasD() {
 
 //REALOCA A LISTA DE ROUPAS EM REPARO APÓS ALGUMA TRANSFERENCIA
 void realocaRoupasR() {
-     for (int i = 1; i < 20; i++) {
+     for (int i = 1; i < sizeof(roupasR); i++) {
      roupasR[i-1] = roupasR[i];
      }
 }
@@ -165,15 +169,149 @@ int sort2 = rand() % 4;
 //CLIENTE COMPRA ROUPA DA LISTA DE VENDAS
 void *clienteCompra (void *arg) {
    roupasD[0] = NULL;
+   realocaRoupasD();
+   pthread_exit(NULL);
 }
 
 void *clienteDoa (void *arg) {
    for (int i = 0; i < 20; i++) {
    if (roupasR[i] == NULL){
+  Roupa roupa;
+  //ADICIONAR ALGO PRO CODIGO
+  //roupa.cod = 300+i;
+  roupa.preco = rand() % 100;
+    int sort = rand() % 4;
+    switch (sort)
+{
+   case 0:
+     roupa.modelo = "camisa";
+   break;
 
+   case 1:
+     roupa.modelo = "bermuda";
+   break;
+
+   case 2:
+     roupa.modelo = "calca";
+   break;
+
+   case 3:
+     roupa.modelo = "moletom";
+   break;
+
+   case 4:
+     roupa.modelo = "saia";
+   break;
+}
+
+int sort2 = rand() % 4;
+    switch (sort2)
+{
+   case 0:
+     roupa.tamanho = "PP";
+   break;
+
+   case 1:
+     roupa.tamanho = "P";
+   break;
+
+   case 2:
+     roupa.tamanho = "M";
+   break;
+
+   case 3:
+     roupa.tamanho = "G";
+   break;
+
+   case 4:
+     roupa.tamanho = "GG";
+   break;
+}
+  *roupasR[i] = roupa;
+  break;
    }
-   
    }
+   pthread_exit(NULL);
+}
+
+void *voluntarioMove (*arg) {
+  for (int i =0; i < sizeof(roupasD);i++) {
+    if (roupasD[i] == NULL) {
+      int temp = rand() % sizeof(roupasR);
+      roupasD[i] = roupasR[temp];
+      roupasR[temp] = NULL;
+      realocaRoupasR();
+    }
+  }
+  pthread_exit(NULL);
+}
+
+void *voluntarioDoa (*arg) {
+  for (int i = 0; i < 50; i++) {
+   if (roupasD[i] == NULL){
+  Roupa roupa;
+  //ADICIONAR ALGO PRO CODIGO
+  //roupa.cod = 300+i;
+  roupa.preco = rand() % 100;
+    int sort = rand() % 4;
+    switch (sort)
+{
+   case 0:
+     roupa.modelo = "camisa";
+   break;
+
+   case 1:
+     roupa.modelo = "bermuda";
+   break;
+
+   case 2:
+     roupa.modelo = "calca";
+   break;
+
+   case 3:
+     roupa.modelo = "moletom";
+   break;
+
+   case 4:
+     roupa.modelo = "saia";
+   break;
+}
+
+int sort2 = rand() % 4;
+    switch (sort2)
+{
+   case 0:
+     roupa.tamanho = "PP";
+   break;
+
+   case 1:
+     roupa.tamanho = "P";
+   break;
+
+   case 2:
+     roupa.tamanho = "M";
+   break;
+
+   case 3:
+     roupa.tamanho = "G";
+   break;
+
+   case 4:
+     roupa.tamanho = "GG";
+   break;
+}
+  *roupasD[i] = roupa;
+  break;
+   }
+   }
+
+   pthread_exit(NULL);
+}
+
+void *voluntarioRemove (*arg) {
+  roupasD[0] = NULL;
+   realocaRoupasD();
+   pthread_exit(NULL);
 }
 
 int main(void) {
