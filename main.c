@@ -32,14 +32,18 @@ Roupa roupasR [20];
 
 pthread_mutex_t mutexDisponiveis;
 pthread_mutex_t mutexReparos;
+pthread_mutex_t mutexContador;
+
 
 
 
 //METODO QUE CRIA UMA ROUPA COM ATRIBUTOS ALEATORIOS
 Roupa criaRoupa() {
 Roupa roupa;
+  pthread_mutex_lock(&mutexContador);
   roupa.cod = contador;
   contador++;
+  pthread_mutex_unlock(&mutexContador);
   roupa.preco = rand() % 100;
     int sort = rand() % 4;
     switch (sort)
@@ -102,10 +106,8 @@ Roupa criaRoupaFalsa() {
 void criaRoupasD() {
   for (int i=0; i < 20; i++) {
 roupasD[i] = criaRoupa();
-
-printf("Roupa %d \n", roupasD[i].cod);
+//printf("Roupa %d \n", roupasD[i].cod);
   }
-
   for (int j =20; j < 50; j++) {
     roupasD[j] = criaRoupaFalsa();
   }
@@ -126,31 +128,38 @@ void criaRoupasR() {
 
 //REALOCA A LISTA DE ROUPAS A VENDA, APÓS ALGUMA VENDA
 void realocaRoupasD() {
+  pthread_mutex_lock(&mutexDisponiveis);
      for (int i = 1; i < sizeof(roupasD); i++) {
        if (roupasD[i-1].cod != 0) {
      roupasD[i-1] = roupasD[i];
        }
      }
+  pthread_mutex_unlock(&mutexDisponiveis);
 }
 
 //REALOCA A LISTA DE ROUPAS EM REPARO APÓS ALGUMA TRANSFERENCIA
 void realocaRoupasR() {
+  pthread_mutex_lock(&mutexReparos);
      for (int i = 1; i < sizeof(roupasR); i++) {
      if (roupasR[i-1].cod == 0) {
      roupasR[i-1] = roupasR[i];
        }
 }
+  pthread_mutex_unlock(&mutexReparos);
 }
 
 /////////////////CLIENTESSSSSS
 
 void clienteCompra() {
+  pthread_mutex_lock(&mutexDisponiveis);
    printf("Cliente %d está comprando a roupa %d\n", contCliente, roupasD[0].cod);
-   roupasD[0] = criaRoupaFalsa();
+    roupasD[0] = criaRoupaFalsa();
+  pthread_mutex_unlock(&mutexDisponiveis);
    realocaRoupasD();
 }
 
 void clienteDoa () {
+  pthread_mutex_lock(&mutexReparos);
    for (int i = 0; i < 20; i++) {
    if (roupasR[i].cod == 0 ){
   roupasR[i] = criaRoupa();
@@ -158,6 +167,7 @@ void clienteDoa () {
   break;
    }
    }
+  pthread_mutex_unlock(&mutexReparos); 
 }
 
 void *t_clientes (void *arg) {
