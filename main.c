@@ -10,8 +10,8 @@
 #define VOLUNTARIOS 10
 
 
-int contCliente;
-int contVolun;
+int contCliente=1;
+int contVolun=1;
 int contador=1;
 
 
@@ -106,7 +106,6 @@ Roupa criaRoupaFalsa() {
 void criaRoupasD() {
   for (int i=0; i < 20; i++) {
 roupasD[i] = criaRoupa();
-//printf("Roupa %d \n", roupasD[i].cod);
   }
   for (int j =20; j < 50; j++) {
     roupasD[j] = criaRoupaFalsa();
@@ -150,20 +149,24 @@ void realocaRoupasR() {
 
 /////////////////CLIENTESSSSSS
 
+//CLIENTE COMPRA A ROUPA DA PRIMEIRA POSICAO
 void clienteCompra() {
   pthread_mutex_lock(&mutexDisponiveis);
    printf("Cliente %d está comprando a roupa %d\n", contCliente, roupasD[0].cod);
+   contCliente++;
     roupasD[0] = criaRoupaFalsa();
   pthread_mutex_unlock(&mutexDisponiveis);
    realocaRoupasD();
 }
 
+//CLIENTE DOA UMA ROUPA PARA A LISTA DE REPAROS
 void clienteDoa () {
   pthread_mutex_lock(&mutexReparos);
    for (int i = 0; i < 20; i++) {
    if (roupasR[i].cod == 0 ){
   roupasR[i] = criaRoupa();
   printf("Cliente %d está doando uma roupa com o codigo %d\n", contCliente, contador);
+  contCliente++;
   break;
    }
    }
@@ -181,33 +184,46 @@ void *t_clientes (void *arg) {
   pthread_exit(NULL);
 }
 
+//VOLUNTARIO MOVE UMA ROUPA DE POSICAO ALEATORIA PARA A LISTA DE DISPONIVEIS
 void voluntarioMove () {
-  
+  pthread_mutex_lock(&mutexDisponiveis);
   for (int i =0; i < sizeof(roupasD);i++) {
     if (roupasD[i].cod == 0) {
+      pthread_mutex_lock(&mutexReparos);
       int temp = rand() % sizeof(roupasR);
       printf("Voluntario %d está movendo a roupa %d\n", contVolun, roupasR[temp].cod);
+      contVolun++;
       roupasD[i] = roupasR[temp];
+      pthread_mutex_unlock(&mutexDisponiveis);
       roupasR[temp] = criaRoupaFalsa();
       realocaRoupasR();
+      pthread_mutex_unlock(&mutexReparos);
     }
   }
 }
 
+//VOLUNTARIO DOA UMA ROUPA PARA A LISTA DE DISPONIVEIS
 void voluntarioDoa () {
+  pthread_mutex_lock(&mutexDisponiveis);
   for (int i = 0; i < 50; i++) {
    if (roupasD[i].cod == 0){
   printf("Voluntario %d está doando uma roupa %d\n", contVolun, contador);
+  contVolun++;
   roupasD[i] = criaRoupa();
   break;
    }
   }
+  pthread_mutex_unlock(&mutexDisponiveis);
 }
 
+//VOLUNTARIO REMOVE A ROUPA MAIS ANTIGA, DAS DISPONIVEIS
 void voluntarioRemove () {
+  pthread_mutex_lock(&mutexDisponiveis);
   printf("Voluntario %d está removendo a roupa %d\n", contVolun, roupasD[0].cod);
+  contVolun++;
   roupasD[0].cod = 0;
    realocaRoupasD();
+   pthread_mutex_unlock(&mutexDisponiveis);
 }
 
 void *y_voluntarios (void *arg) {
@@ -230,9 +246,8 @@ void *y_voluntarios (void *arg) {
 }
 
 int main(void) {
-  printf("Hello World\n");
+  printf("VAII\n");
   criaRoupasD();
-  printf("Hello World\n");
   criaRoupasR();
   
 
@@ -242,12 +257,12 @@ int main(void) {
 	pthread_mutex_init(&mutexReparos, NULL);
 
   for (int i = 0; i < CLIENTES + VOLUNTARIOS; i++){
-	//printf("Thread %d sendo criada\n",i);
-	//	pthread_create(&t[i], NULL, t_clientes, NULL);
-	//	pthread_create(&y[i], NULL, y_voluntarios, NULL);
+	printf("Thread %d sendo criada\n",i);
+		pthread_create(&t[i], NULL, t_clientes, NULL);
+		pthread_create(&y[i], NULL, y_voluntarios, NULL);
 	}
 
- //printf("Aguardando término das threads\n");
+  printf("Aguardando término das threads\n");
 
 	for (int i = 0; i < CLIENTES + VOLUNTARIOS; i++){
 		pthread_join(t[i],NULL);
