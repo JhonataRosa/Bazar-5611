@@ -128,9 +128,10 @@ void criaRoupasR() {
 //REALOCA A LISTA DE ROUPAS A VENDA, APÓS ALGUMA VENDA
 void realocaRoupasD() {
   pthread_mutex_lock(&mutexDisponiveis);
-     for (int i = 1; i < sizeof(roupasD); i++) {
-       if (roupasD[i-1].cod != 0) {
+     for (int i = 1; i < 50; i++) {
+       if (roupasD[i-1].cod == 0) {
      roupasD[i-1] = roupasD[i];
+     roupasD[i].cod = 0;
        }
      }
   pthread_mutex_unlock(&mutexDisponiveis);
@@ -139,9 +140,10 @@ void realocaRoupasD() {
 //REALOCA A LISTA DE ROUPAS EM REPARO APÓS ALGUMA TRANSFERENCIA
 void realocaRoupasR() {
   pthread_mutex_lock(&mutexReparos);
-     for (int i = 1; i < sizeof(roupasR); i++) {
+     for (int i = 1; i < 20; i++) {
      if (roupasR[i-1].cod == 0) {
      roupasR[i-1] = roupasR[i];
+     roupasR[i].cod = 0;
        }
 }
   pthread_mutex_unlock(&mutexReparos);
@@ -187,10 +189,19 @@ void *t_clientes (void *arg) {
 //VOLUNTARIO MOVE UMA ROUPA DE POSICAO ALEATORIA PARA A LISTA DE DISPONIVEIS
 void voluntarioMove () {
   pthread_mutex_lock(&mutexDisponiveis);
-  for (int i =0; i < sizeof(roupasD);i++) {
+  for (int i =0; i < 50;i++) {
     if (roupasD[i].cod == 0) {
       pthread_mutex_lock(&mutexReparos);
-      int temp = rand() % sizeof(roupasR);
+      //ARRUMAR AQUI EM BAIXO
+      int roupasExistente;
+      for (int j=0; j < 20; j++) {
+      if (roupasR[j].cod != 0) {
+      roupasExistente++;
+      }
+      else 
+        break;
+      }
+      int temp = rand() % roupasExistente;
       printf("Voluntario %d está movendo a roupa %d\n", contVolun, roupasR[temp].cod);
       contVolun++;
       roupasD[i] = roupasR[temp];
@@ -257,7 +268,7 @@ int main(void) {
 	pthread_mutex_init(&mutexReparos, NULL);
 
   for (int i = 0; i < CLIENTES + VOLUNTARIOS; i++){
-	printf("Thread %d sendo criada\n",i);
+	//printf("Thread %d sendo criada\n",i);
 		pthread_create(&t[i], NULL, t_clientes, NULL);
 		pthread_create(&y[i], NULL, y_voluntarios, NULL);
 	}
