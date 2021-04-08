@@ -247,7 +247,7 @@ E aparentemente, não sabemos se por relação ao problema anterior, mas a funç
 Usando o valgrind linux, ele nos relata um possível erro também no trecho de código que corresponde ao que o Voluntario move uma peça da lista de reparos para a lista de disponiveis, mais precisamente o Case 1 do *y_voluntarios.
 
 **/
-int main(void) {
+int main(int argc, char *argv[]) {
   printf("Agora vai\n");
   criaRoupasD();
   criaRoupasR();
